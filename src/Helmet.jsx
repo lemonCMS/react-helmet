@@ -129,10 +129,7 @@ const updateTags = (type, tags) => {
     const headElement = document.head || document.querySelector("head");
     const existingTags = headElement.querySelectorAll(`${type}[${HELMET_ATTRIBUTE}]`);
 
-    // Remove any tags previously injected by Helmet
-    Array.forEach(existingTags, tag => tag.parentNode.removeChild(tag));
-
-    if (tags && tags.length) {
+   if (tags && tags.length) {
         tags
         .reverse()
         .forEach(tag => {
@@ -148,6 +145,8 @@ const updateTags = (type, tags) => {
             headElement.insertBefore(newElement, headElement.firstChild);
         });
     }
+     // Remove any tags previously injected by Helmet
+    Array.forEach(existingTags, tag => tag.parentNode.removeChild(tag));
 };
 
 const generateTitleAsString = (type, title) => {
