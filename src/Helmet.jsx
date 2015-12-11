@@ -132,6 +132,7 @@ const updateTitle = title => {
 const updateTags = (type, tags) => {
   const headElement = document.head || document.querySelector("head");
   const existingTags = headElement.querySelectorAll(`${type}[${HELMET_ATTRIBUTE}]`);
+  const newTagsArray = [];
   const existingTagsArray = [];
   Array.forEach(existingTags, tag => existingTagsArray.push(tag));
 
@@ -157,10 +158,11 @@ const updateTags = (type, tags) => {
         });
 
         if (exists === false) {
-          headElement.insertBefore(newElement, headElement.firstChild);
+          newTagsArray.push(newElement);
         }
       });
     Array.forEach(existingTagsArray, tag => tag.parentNode.removeChild(tag));
+    Array.forEach(newTagsArray, tag => headElement.insertBefore(tag, headElement.firstChild));
   }
 };
 
