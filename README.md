@@ -1,4 +1,5 @@
-Dropin replacement for the downloaded / compiled react-helmet package
+Dropin replacement for the downloaded / compiled react-helmet package because i could not get master working with 
+Internet Explorer
 
 ````javascript
 var updateTags = function updateTags(type, tags) {
