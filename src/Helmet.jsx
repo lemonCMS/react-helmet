@@ -149,14 +149,14 @@ const updateTags = (type, tags) => {
         newElement.setAttribute(HELMET_ATTRIBUTE, "true");
 
         let exists = false;
-        Array.some(existingTagsArray, (tag, key) => {
+        Array.some(existingTagsArray, (existingTag, key) => {
           if (exists === false && newElement.isEqualNode(existingTagsArray[key])) {
             existingTagsArray.splice(key, 1);
             exists = true;
           }
         });
 
-        if (exists == false) {
+        if (exists === false) {
           headElement.insertBefore(newElement, headElement.firstChild);
         }
       });
