@@ -1,6 +1,11 @@
 Dropin replacement for the downloaded / compiled react-helmet package because i could not get master working with 
 Internet Explorer
 
+The updated function prevents Helmet to just remove all tags and place the new tags in the header.
+If a tag is already present it will be left alone.
+This will prevent the FOUC thats happens when you also have your stylesheets included with Helmet.
+
+
 ````javascript
 var updateTags = function updateTags(type, tags) {
   var headElement = document.head || document.querySelector("head");
