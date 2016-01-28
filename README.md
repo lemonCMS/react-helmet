@@ -12,7 +12,12 @@ var updateTags = function updateTags(type, tags) {
   var existingTags = headElement.querySelectorAll(type + "[" + HELMET_ATTRIBUTE + "]");
   var newTagsArray = [];
   var existingTagsArray = [];
-  Array.forEach(existingTags, function(tag) { existingTagsArray.push(tag); });
+  Array.forEach(existingTags, function(tag) { 
+        if(tag.hasAttribute('data-reactid')) {
+            tag.removeAttribute('data-reactid');
+        }
+        existingTagsArray.push(tag); 
+    });
 
   if (tags && tags.length) {
     tags
