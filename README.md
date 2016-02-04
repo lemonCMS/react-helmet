@@ -47,5 +47,9 @@ var updateTags = function updateTags(type, tags) {
     Array.forEach(existingTagsArray, function(tag) { tag.parentNode.removeChild(tag); });
     Array.forEach(newTagsArray, function(tag) { headElement.insertBefore(tag, headElement.firstChild); });
   }
+    return {
+        oldTags: existingTagsArray,
+        newTags: newTagsArray
+    };
 };
 ````
