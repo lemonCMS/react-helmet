@@ -136,7 +136,12 @@ const updateTitle = title => {
 
 const updateTags = (type, tags) => {
     const headElement = document.head || document.querySelector("head");
-    const oldTags = [...headElement.querySelectorAll(`${type}[${HELMET_ATTRIBUTE}]`)];
+    const oldTags = [...headElement.querySelectorAll(`${type}[${HELMET_ATTRIBUTE}]`)].map((tag) => {
+        if (tag.hasAttribute('data-reactid')) {
+            tag.removeAttribute('data-reactid');
+        }
+        return tag;
+    });
     const newTags = [];
     let indexToDelete;
 
