@@ -140,12 +140,60 @@ const updateTitle = title => {
 
 const updateTags = (type, tags) => {
   const headElement = document.head || document.querySelector("head");
+  const existingTags = headElement.querySelectorAll(type + "[" + HELMET_ATTRIBUTE + "]");
+  const newTagsArray = [];
+  const existingTagsArray = [];
+  Array.forEach(existingTags, function(tag) {
+    if (tag.hasAttribute('data-reactid')) {
+      tag.removeAttribute('data-reactid');
+    }
+    existingTagsArray.push(tag);
+  });
+
+  if (tags && tags.length) {
+    tags.reverse()
+        .forEach(function(tag)  {
+          const newElement = document.createElement(type);
+
+          for (var attribute in tag) {
+            if (tag.hasOwnProperty(attribute)) {
+              newElement.setAttribute(attribute, tag[attribute]);
+            }
+          }
+          newElement.setAttribute(HELMET_ATTRIBUTE, "true");
+
+          let exists = false;
+          Array.some(existingTagsArray, function(existingTag, key) {
+            if (exists === false && newElement.isEqualNode(existingTagsArray[key])) {
+              existingTagsArray.splice(key, 1);
+              exists = true;
+            }
+          });
+
+          if (exists === false) {
+            newTagsArray.push(newElement);
+          }
+        });
+    Array.forEach(existingTagsArray, (tag) => { tag.parentNode.removeChild(tag); });
+    Array.forEach(newTagsArray, (tag) => { headElement.insertBefore(tag, headElement.firstChild); });
+  }
+  return {
+    oldTags: existingTagsArray,
+    newTags: newTagsArray
+  };
+};
+
+
+const updateTagsx = (type, tags) => {
+  const headElement = document.head || document.querySelector("head");
   const oldTags = [...headElement.querySelectorAll(`${type}[${HELMET_ATTRIBUTE}]`)].map((tag) => {
     if (tag.hasAttribute('data-reactid')) {
       tag.removeAttribute('data-reactid');
     }
     return tag;
   });
+  console.log(oldTags);
+
   const newTags = [];
   let indexToDelete;
 
