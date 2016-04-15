@@ -139,7 +139,13 @@ const updateTitle = title => {
 };
 
 const updateTags = (type, tags) => {
-  const headElement = document.head || document.querySelector("head");
+  let headElement;
+  if (type === TAG_NAMES.SCRIPT) {
+    headElement = document.body || document.querySelector("body");
+  } else {
+    headElement = document.head || document.querySelector("head");
+  }
+
   const existingTags = headElement.querySelectorAll(type + "[" + HELMET_ATTRIBUTE + "]");
   const newTagsArray = [];
   const existingTagsArray = [];
@@ -175,7 +181,13 @@ const updateTags = (type, tags) => {
           }
         });
     Array.forEach(existingTagsArray, (tag) => { tag.parentNode.removeChild(tag); });
-    Array.forEach(newTagsArray, (tag) => { headElement.insertBefore(tag, headElement.firstChild); });
+    Array.forEach(newTagsArray, (tag) => {
+      if (type === TAG_NAMES.SCRIPT) {
+        headElement.insertBefore(tag, headElement.lastChild);
+      } else {
+        headElement.insertBefore(tag, headElement.firstChild);
+      }
+    });
   }
   return {
     oldTags: existingTagsArray,
