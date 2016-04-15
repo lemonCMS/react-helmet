@@ -140,13 +140,21 @@ const updateTitle = title => {
 
 const updateTags = (type, tags) => {
   let headElement;
-  if (type === TAG_NAMES.SCRIPT) {
+  if (type === TAG_NAMES.LINK_AFFIX || type === TAG_NAMES.SCRIPT_AFFIX) {
     headElement = document.body || document.querySelector("body");
   } else {
     headElement = document.head || document.querySelector("head");
   }
 
-  const existingTags = headElement.querySelectorAll(type + "[" + HELMET_ATTRIBUTE + "]");
+  let mappedType = type;
+  if (type === TAG_NAMES.LINK_AFFIX) {
+    mappedType = TAG_NAMES.LINK;
+  }
+  if (type === TAG_NAMES.SCRIPT_AFFIX) {
+    mappedType = TAG_NAMES.SCRIPT;
+  }
+
+  const existingTags = headElement.querySelectorAll(mappedType + "[" + HELMET_ATTRIBUTE + "]");
   const newTagsArray = [];
   const existingTagsArray = [];
   Array.forEach(existingTags, function(tag) {
@@ -159,7 +167,7 @@ const updateTags = (type, tags) => {
   if (tags && tags.length) {
     tags.reverse()
         .forEach(function(tag)  {
-          const newElement = document.createElement(type);
+          newElement = document.createElement(mappedType);
 
           for (var attribute in tag) {
             if (tag.hasOwnProperty(attribute)) {
@@ -182,7 +190,7 @@ const updateTags = (type, tags) => {
         });
     Array.forEach(existingTagsArray, (tag) => { tag.parentNode.removeChild(tag); });
     Array.forEach(newTagsArray, (tag) => {
-      if (type === TAG_NAMES.SCRIPT) {
+      if (type === TAG_NAMES.LINK_AFFIX || type === TAG_NAMES.SCRIPT_AFFIX) {
         headElement.insertBefore(tag, headElement.lastChild);
       } else {
         headElement.insertBefore(tag, headElement.firstChild);
@@ -294,6 +302,14 @@ const generateTagsAsReactComponent = (type, tags) => {
       mappedTag[mappedAttribute] = tag[attribute];
     });
 
+    if (type === TAG_NAMES.SCRIPT_AFFIX) {
+      return React.createElement(TAG_NAMES.SCRIPT, mappedTag);
+    }
+
+    if (type === TAG_NAMES.LINK_AFFIX) {
+      return React.createElement(TAG_NAMES.LINK, mappedTag);
+    }
+
     return React.createElement(type, mappedTag);
   });
 
@@ -306,12 +322,14 @@ const getMethodsForTag = (type, tags) => ({
   toString: (type === TAG_NAMES.TITLE) ? () => generateTitleAsString(type, tags) : () => generateTagsAsString(type, tags)
 });
 
-const mapStateOnServer = ({title, baseTag, metaTags, linkTags, scriptTags}) => ({
+const mapStateOnServer = ({title, baseTag, metaTags, linkTags, linkAffixTags, scriptTags, scripAffixTags}) => ({
   title: getMethodsForTag(TAG_NAMES.TITLE, title),
   base: getMethodsForTag(TAG_NAMES.BASE, baseTag),
   meta: getMethodsForTag(TAG_NAMES.META, metaTags),
   link: getMethodsForTag(TAG_NAMES.LINK, linkTags),
-  script: getMethodsForTag(TAG_NAMES.SCRIPT, scriptTags)
+  linkAffix: getMethodsForTag(TAG_NAMES.LINK_AFFIX, linkAffixTags),
+  script: getMethodsForTag(TAG_NAMES.SCRIPT, scriptTags),
+  scriptAffix: getMethodsForTag(TAG_NAMES.SCRIPT_AFFIX, scriptTags)
 });
 
 const Helmet = (Component) => {
@@ -324,7 +342,9 @@ const Helmet = (Component) => {
      * @param {Object} base: {"target": "_blank", "href": "http://mysite.com/"}
      * @param {Array} meta: [{"name": "description", "content": "Test description"}]
      * @param {Array} link: [{"rel": "canonical", "href": "http://mysite.com/example"}]
+     * @param {Array} linkAffix: [{"rel": "canonical", "href": "http://mysite.com/example"}]
      * @param {Array} script: [{"src": "http://mysite.com/js/test.js", "type": "text/javascript"}]
+     * @param {Array} scriptAffix: [{"src": "http://mysite.com/js/test.js", "type": "text/javascript"}]
      */
     static propTypes = {
       title: React.PropTypes.string,
@@ -333,7 +353,9 @@ const Helmet = (Component) => {
       base: React.PropTypes.object,
       meta: React.PropTypes.arrayOf(React.PropTypes.object),
       link: React.PropTypes.arrayOf(React.PropTypes.object),
-      script: React.PropTypes.arrayOf(React.PropTypes.object)
+      linkAffix: React.PropTypes.arrayOf(React.PropTypes.object),
+      script: React.PropTypes.arrayOf(React.PropTypes.object),
+      scriptAffix: React.PropTypes.arrayOf(React.PropTypes.object)
     }
 
     shouldComponentUpdate(nextProps) {
@@ -350,10 +372,11 @@ const Helmet = (Component) => {
           baseTag: [],
           metaTags: [],
           linkTags: [],
-          scriptTags: []
+          linkAffixTags: [],
+          scriptTags: [],
+          scriptAffixTags: []
         });
       }
-
       return mappedState;
     }
 
@@ -376,17 +399,21 @@ const reducePropsToState = (propsList) => ({
   baseTag: getBaseTagFromPropsList([TAG_PROPERTIES.HREF], propsList),
   metaTags: getTagsFromPropsList(TAG_NAMES.META, [TAG_PROPERTIES.NAME, TAG_PROPERTIES.CHARSET, TAG_PROPERTIES.HTTPEQUIV, TAG_PROPERTIES.PROPERTY], propsList),
   linkTags: getTagsFromPropsList(TAG_NAMES.LINK, [TAG_PROPERTIES.REL, TAG_PROPERTIES.HREF], propsList),
-  scriptTags: getTagsFromPropsList(TAG_NAMES.SCRIPT, [TAG_PROPERTIES.SRC], propsList)
+  linkAffixTags: getTagsFromPropsList(TAG_NAMES.LINK_AFFIX, [TAG_PROPERTIES.REL, TAG_PROPERTIES.HREF], propsList),
+  scriptTags: getTagsFromPropsList(TAG_NAMES.SCRIPT, [TAG_PROPERTIES.SRC], propsList),
+  scriptAffixTags: getTagsFromPropsList(TAG_NAMES.SCRIPT_AFFIX, [TAG_PROPERTIES.SRC], propsList)
 });
 
 const handleClientStateChange = (newState) => {
-  const {title, baseTag, metaTags, linkTags, scriptTags, onChangeClientState} = newState;
+  const {title, baseTag, metaTags, linkTags, linkAffixTags, scriptTags, scriptAffixTags, onChangeClientState} = newState;
 
   updateTitle(title);
 
   const tagUpdates = {
     scriptTags: updateTags(TAG_NAMES.SCRIPT, scriptTags),
+    scriptAffixTags: updateTags(TAG_NAMES.SCRIPT_AFFIX, scriptAffixTags),
     linkTags: updateTags(TAG_NAMES.LINK, linkTags),
+    linkAffixTags: updateTags(TAG_NAMES.LINK_AFFIX, linkAffixTags),
     metaTags: updateTags(TAG_NAMES.META, metaTags),
     baseTag: updateTags(TAG_NAMES.BASE, baseTag)
   };

@@ -3,7 +3,9 @@ export const TAG_NAMES = {
     BASE: "base",
     META: "meta",
     LINK: "link",
-    SCRIPT: "script"
+    LINK_AFFIX: "linkAffix",
+    SCRIPT: "script",
+    SCRIPT_AFFIX: "scriptAffix"
 };
 
 export const TAG_PROPERTIES = {
