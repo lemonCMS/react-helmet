@@ -165,8 +165,13 @@ const updateTags = (type, tags) => {
   });
 
   if (tags && tags.length) {
-    tags.reverse()
-        .forEach(function(tag)  {
+
+    let order = tags.reverse();
+    if (type === TAG_NAMES.LINK_AFFIX || type === TAG_NAMES.SCRIPT_AFFIX) {
+      order = tags;
+    }
+    // console.log('ORDER', order);
+    order.forEach(function(tag)  {
           newElement = document.createElement(mappedType);
 
           for (var attribute in tag) {
@@ -212,7 +217,7 @@ const updateTagsx = (type, tags) => {
     }
     return tag;
   });
-  console.log(oldTags);
+  // console.log(oldTags);
 
   const newTags = [];
   let indexToDelete;
@@ -290,6 +295,7 @@ const generateTitleAsReactComponent = (type, title) => {
 
 const generateTagsAsReactComponent = (type, tags) => {
   /* eslint-disable react/display-name */
+
   const component = [...tags].map((tag, i) => {
     const mappedTag = {
       key: i,
@@ -322,14 +328,14 @@ const getMethodsForTag = (type, tags) => ({
   toString: (type === TAG_NAMES.TITLE) ? () => generateTitleAsString(type, tags) : () => generateTagsAsString(type, tags)
 });
 
-const mapStateOnServer = ({title, baseTag, metaTags, linkTags, linkAffixTags, scriptTags, scripAffixTags}) => ({
+const mapStateOnServer = ({title, baseTag, metaTags, linkTags, linkAffixTags, scriptTags, scriptAffixTags}) => ({
   title: getMethodsForTag(TAG_NAMES.TITLE, title),
   base: getMethodsForTag(TAG_NAMES.BASE, baseTag),
   meta: getMethodsForTag(TAG_NAMES.META, metaTags),
   link: getMethodsForTag(TAG_NAMES.LINK, linkTags),
   linkAffix: getMethodsForTag(TAG_NAMES.LINK_AFFIX, linkAffixTags),
   script: getMethodsForTag(TAG_NAMES.SCRIPT, scriptTags),
-  scriptAffix: getMethodsForTag(TAG_NAMES.SCRIPT_AFFIX, scriptTags)
+  scriptAffix: getMethodsForTag(TAG_NAMES.SCRIPT_AFFIX, scriptAffixTags)
 });
 
 const Helmet = (Component) => {
