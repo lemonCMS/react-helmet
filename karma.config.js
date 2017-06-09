@@ -1,6 +1,10 @@
 // Karma configuration
 
 module.exports = function (config) {
+    function normalizationBrowserName(browser) {
+        return browser.toLowerCase().split(/[ /-]/)[0];
+    }
+
     config.set({
         // ... normal karma configuration
         basePath: "",
@@ -10,57 +14,44 @@ module.exports = function (config) {
 
         client: {
             mocha: {
+                bail: true,
                 reporter: "html"
             }
         },
 
         // frameworks to use
         frameworks: [
-            "phantomjs-shim",
             "chai-sinon",
             "mocha"
         ],
 
         files: [
-            "lib/test/*.js"
+            "./test/test.js"
         ],
 
         preprocessors: {
             // add webpack as preprocessor
-            "lib/test/*.js": [
-                "webpack",
-                "sourcemap"
-            ]
+            "./test/test.js": ["webpack", "sourcemap"]
         },
 
         coverageReporter: {
-            dir: "build/reports/coverage",
+            dir: "coverage/json",
+            includeAllSources: true,
             reporters: [{
-                type: "html",
-                subdir: "html"
-            }, {
-                type: "text",
-                subdir: ".",
-                file: "text.txt"
-            }, {
-                type: "lcov",
-                subdir: ".",
-                file: "lcov.info"
+                type: "json",
+                subdir: normalizationBrowserName
             }]
         },
 
         webpack: {
             devtool: "inline-source-map",
             module: {
-                preLoaders: [{
-                    test: /(\.js(x)?)$/,
+                rules: [{
+                    test: /\.js$/,
                     // exclude this dirs from coverage
-                    exclude: /(node_modules|bower_components)\//,
-                    loader: "isparta-instrumenter-loader"
+                    exclude: [/node_modules/],
+                    loader: "babel-loader"
                 }]
-            },
-            resolve: {
-                extensions: ["", ".web.js", ".js"]
             },
             watch: true
         },
@@ -97,10 +88,16 @@ module.exports = function (config) {
         // - Safari (only Mac; has to be installed with `npm install karma-safari-launcher`)
         // - PhantomJS
         // - IE (only Windows; has to be installed with `npm install karma-ie-launcher`)
-        browsers: [
-            "Chrome",
-            "PhantomJS"
-        ],
+        browsers: process.env.TRAVIS
+            ? ["ChromeTravis", "PhantomJS"]
+            : ["Chrome", "PhantomJS", "Firefox"],
+
+        customLaunchers: {
+            ChromeTravis: {
+                base: "Chrome",
+                flags: ["--no-sandbox"]
+            }
+        },
 
         // If browser does not capture in given timeout [ms], kill it
         captureTimeout: 60000,

@@ -1,172 +1,125 @@
+<img align="right" width="200" src="http://static.nfl.com/static/content/public/static/img/logos/react-helmet.jpg" />
 
-Dropin replacement for the downloaded / compiled react-helmet package because i could not get master working with 
-Internet Explorer
-
-The updated function prevents Helmet to just remove all tags and place the new tags in the header.
-If a tag is already present it will be left alone.
-This will prevent the FOUC thats happens when you also have your stylesheets included with Helmet.
-
-
-````javascript
-var updateTags = function updateTags(type, tags) {
-  var headElement = document.head || document.querySelector("head");
-  var existingTags = headElement.querySelectorAll(type + "[" + HELMET_ATTRIBUTE + "]");
-  var newTagsArray = [];
-  var existingTagsArray = [];
-  Array.forEach(existingTags, function(tag) { 
-        if(tag.hasAttribute('data-reactid')) {
-            tag.removeAttribute('data-reactid');
-        }
-        existingTagsArray.push(tag); 
-    });
-
-  if (tags && tags.length) {
-    tags
-      .reverse()
-      .forEach(function(tag)  {
-        var newElement = document.createElement(type);
-
-        for (var attribute in tag) {
-          if (tag.hasOwnProperty(attribute)) {
-            newElement.setAttribute(attribute, tag[attribute]);
-          }
-        }
-        newElement.setAttribute(HELMET_ATTRIBUTE, "true");
-
-        var exists = false;
-        Array.some(existingTagsArray, function(existingTag, key) {
-          if (exists === false && newElement.isEqualNode(existingTagsArray[key])) {
-            existingTagsArray.splice(key, 1);
-            exists = true;
-          }
-        });
-
-        if (exists === false) {
-          newTagsArray.push(newElement);
-        }
-      });
-    Array.forEach(existingTagsArray, function(tag) { tag.parentNode.removeChild(tag); });
-    Array.forEach(newTagsArray, function(tag) { headElement.insertBefore(tag, headElement.firstChild); });
-  }
-    return {
-        oldTags: existingTagsArray,
-        newTags: newTagsArray
-    };
-};
-````
-
-<img src="http://static.nfl.com/static/content/public/static/img/logos/nfl-engineering-light.svg" width="300" />
 # React Helmet
-[![npm package](https://img.shields.io/npm/v/react-helmet.svg?style=flat-square)](https://www.npmjs.org/package/react-helmet)
-[![build status](https://img.shields.io/travis/nfl/react-helmet/master.svg?style=flat-square)](https://travis-ci.org/nfl/react-helmet)
-[![dependency status](https://img.shields.io/david/nfl/react-helmet.svg?style=flat-square)](https://david-dm.org/nfl/react-helmet)
 
-This reusable React component will manage all of your changes to the document head with support for document title, meta, link, script, and base tags.
+[![npm Version](https://img.shields.io/npm/v/react-helmet.svg?style=flat-square)](https://www.npmjs.org/package/react-helmet)
+[![codecov.io](https://img.shields.io/codecov/c/github/nfl/react-helmet.svg?branch=master&style=flat-square)](https://codecov.io/github/nfl/react-helmet?branch=master)
+[![Build Status](https://img.shields.io/travis/nfl/react-helmet/master.svg?style=flat-square)](https://travis-ci.org/nfl/react-helmet)
+[![Dependency Status](https://img.shields.io/david/nfl/react-helmet.svg?style=flat-square)](https://david-dm.org/nfl/react-helmet)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md#pull-requests)
 
-Inspired by [react-document-title](https://github.com/gaearon/react-document-title)
+This reusable React component will manage all of your changes to the document head.
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+Helmet _takes_ plain HTML tags and _outputs_ plain HTML tags. It's dead simple, and React beginner friendly.
 
-- [Examples](#examples)
-- [Features](#features)
-- [Installation](#installation)
-- [Server Usage](#server-usage)
-- [Use Cases](#use-cases)
-- [Contributing to this project](#contributing-to-this-project)
-- [License](#license)
-- [More Examples](#more-examples)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-## Examples
+## Example
 ```javascript
 import React from "react";
-import Helmet from "react-helmet";
+import {Helmet} from "react-helmet";
 
-export default function Application () {
+class Application extends React.Component {
+  render () {
     return (
         <div className="application">
-            <Helmet title="My Title" />
+            <Helmet>
+                <meta charSet="utf-8" />
+                <title>My Title</title>
+                <link rel="canonical" href="http://mysite.com/example" />
+            </Helmet>
             ...
         </div>
     );
+  }
 };
 ```
+
+Nested or latter components will override duplicate changes:
 
 ```javascript
-import React from "react";
-import Helmet from "react-helmet";
+<Parent>
+    <Helmet>
+        <title>My Title</title>
+        <meta name="description" content="Helmet application" />
+    </Helmet>
 
-export default function Application () {
-    return (
-        <div className="application">
-            <Helmet
-                title="My Title"
-                titleTemplate="MySite.com - %s"
-                base={{"target": "_blank", "href": "http://mysite.com/"}}
-                meta={[
-                    {"name": "description", "content": "Helmet application"},
-                    {"property": "og:type", "content": "article"}
-                ]}
-                link={[
-                    {"rel": "canonical", "href": "http://mysite.com/example"},
-                    {"rel": "apple-touch-icon", "href": "http://mysite.com/img/apple-touch-icon-57x57.png"},
-                    {"rel": "apple-touch-icon", "sizes": "72x72", "href": "http://mysite.com/img/apple-touch-icon-72x72.png"}
-                ]}
-                script={[
-                  {"src": "http://include.com/pathtojs.js", "type": "text/javascript"}
-                ]}
-                onChangeClientState={(newState) => console.log(newState)}
-            />
-            ...
-        </div>
-    );
-};
+    <Child>
+        <Helmet>
+            <title>Nested Title</title>
+            <meta name="description" content="Nested component" />
+        </Helmet>
+    </Child>
+</Parent>
 ```
+
+outputs:
+
+```html
+<head>
+    <title>Nested Title</title>
+    <meta name="description" content="Nested component">
+</head>
+```
+
+See below for a full reference guide.
 
 ## Features
-- Supports isomorphic environment.
+- Supports all valid head tags: `title`, `base`, `meta`, `link`, `script`, `noscript`, and `style` tags.
+- Supports attributes for `body`, `html` and `title` tags.
+- Supports server-side rendering.
 - Nested components override duplicate head changes.
-- Duplicate head changes preserved when specified in same component (support for tags like "apple-touch-icon").
-- Only valid `base`/`meta`/`link`/`script` key names allowed.
-- Support for callbacks to fire when Helmet changes the DOM.
+- Duplicate head changes are preserved when specified in the same component (support for tags like "apple-touch-icon").
+- Callback for tracking DOM changes.
+
+## Compatibility
+
+Helmet 5 is fully backward-compatible with previous Helmet releases, so you can upgrade at any time without fear of breaking changes. We encourage you to update your code to our more semantic API, but please feel free to do so at your own pace.
 
 ## Installation
+
+Yarn:
+```bash
+yarn add react-helmet
 ```
+
+npm:
+```bash
 npm install --save react-helmet
 ```
 
 ## Server Usage
-To use on the server, call `rewind()` after `ReactDOM.renderToString` or `ReactDOM.renderToStaticMarkup` to get the head data for use in your prerender.
+To use on the server, call `Helmet.renderStatic()` after `ReactDOMServer.renderToString` or `ReactDOMServer.renderToStaticMarkup` to get the head data for use in your prerender.
+
+Because this component keeps track of mounted instances, **you have to make sure to call `renderStatic` on server**, or you'll get a memory leak.
 
 ```javascript
-ReactDOM.renderToString(<Handler />);
-let head = Helmet.rewind();
-
-head.title
-head.base
-head.meta
-head.link
-head.script
+ReactDOMServer.renderToString(<Handler />);
+const helmet = Helmet.renderStatic();
 ```
 
-`head` contains five possible properties, `title`, `base`, `meta`, `link`, `script`:
+This `helmet` instance contains the following properties:
+- `base`
+- `bodyAttributes`
+- `htmlAttributes`
+- `link`
+- `meta`
+- `noscript`
+- `script`
+- `style`
+- `title`
 
-- Each property contains `toComponent()` and `toString()` methods. Use whichever is appropriate for your environment. E.g:
+Each property contains `toComponent()` and `toString()` methods. Use whichever is appropriate for your environment. For attributes, use the JSX spread operator on the object returned by `toComponent()`. E.g:
 
 ### As string output
 ```javascript
 const html = `
     <!doctype html>
-    <html>
+    <html ${helmet.htmlAttributes.toString()}>
         <head>
-            ${head.title.toString()}
-            ${head.meta.toString()}
-            ${head.link.toString()}
+            ${helmet.title.toString()}
+            ${helmet.meta.toString()}
+            ${helmet.link.toString()}
         </head>
-        <body>
+        <body ${helmet.bodyAttributes.toString()}>
             <div id="content">
                 // React stuff here
             </div>
@@ -178,14 +131,17 @@ const html = `
 ### As React components
 ```javascript
 function HTML () {
+    const htmlAttrs = helmet.htmlAttributes.toComponent();
+    const bodyAttrs = helmet.bodyAttributes.toComponent();
+
     return (
-        <html>
+        <html {...htmlAttrs}>
             <head>
-                {head.title.toComponent()}
-                {head.meta.toComponent()}
-                {head.link.toComponent()}
+                {helmet.title.toComponent()}
+                {helmet.meta.toComponent()}
+                {helmet.link.toComponent()}
             </head>
-            <body>
+            <body {...bodyAttrs}>
                 <div id="content">
                     // React stuff here
                 </div>
@@ -195,100 +151,97 @@ function HTML () {
 }
 ```
 
-## Use Cases
-1. Nested or latter components will override duplicate changes.
-  ```javascript
-  <Helmet
-      title="My Title"
-      meta={[
-          {"name": "description", "content": "Helmet application"}
-      ]}
-  />
-  <Helmet
-      title="Nested Title"
-      meta={[
-          {"name": "description", "content": "Nested component"}
-      ]}
-  />
-  ```
-  Yields:
-  ```
-  <head>
-      <title>Nested Title</title>
-      <meta name="description" content="Nested component">
-  </head>
-  ```
+### Reference Guide
 
-2. Use a titleTemplate to format title text in your page title
-  ```javascript
-  <Helmet
-      title="My Title"
-      titleTemplate="%s | MyAwesomeWebsite.com"
-  />
-  <Helmet
-      title="Nested Title"
-  />
-  ```
-  Yields:
-  ```
-  <head>
-      <title>Nested Title | MyAwesomeWebsite.com</title>
-  </head>
-  ```
+```javascript
+<Helmet
+    {/* (optional) set to false to disable string encoding (server-only) */}
+    encodeSpecialCharacters={true}
 
-3. Duplicate `meta` and/or `link` tags in the same component are preserved
-  ```javascript
-  <Helmet
-      link={[
-          {"rel": "apple-touch-icon", "href": "http://mysite.com/img/apple-touch-icon-57x57.png"},
-          {"rel": "apple-touch-icon", "sizes": "72x72", "href": "http://mysite.com/img/apple-touch-icon-72x72.png"}
-      ]}
-  />
-  ```
-  Yields:
-  ```
-  <head>
-      <link rel="apple-touch-icon" href="http://mysite.com/img/apple-touch-icon-57x57.png">
-      <link rel="apple-touch-icon" sizes="72x72" href="http://mysite.com/img/apple-touch-icon-72x72.png">
-  </head>
-  ```
+    {/*
+        (optional) Useful when you want titles to inherit from a template:
 
-4. Duplicate tags can still be overwritten
-  ```javascript
-  <Helmet
-      link={[
-          {"rel": "apple-touch-icon", "href": "http://mysite.com/img/apple-touch-icon-57x57.png"},
-          {"rel": "apple-touch-icon", "sizes": "72x72", "href": "http://mysite.com/img/apple-touch-icon-72x72.png"}
-      ]}
-  />
-  <Helmet
-      link={[
-          {"rel": "apple-touch-icon", "href": "http://mysite.com/img/apple-touch-icon-180x180.png"}
-      ]}
-  />
-  ```
-  Yields:
-  ```
-  <head>
-      <link rel="apple-touch-icon" href="http://mysite.com/img/apple-touch-icon-180x180.png">
-  </head>
-  ```
+        <Helmet
+            titleTemplate="%s | MyAwesomeWebsite.com"
+        >
+            <title>My Title</title>
+        </Helmet>
 
-5. Only one base tag is allowed
-  ```javascript
-  <Helmet
-      base={{"href": "http://mysite.com/"}}
-  />
-  <Helmet
-      base={{"href": "http://mysite.com/blog"}}
-  />
-  ```
-  Yields:
-  ```
-  <head>
-      <base href="http://mysite.com/blog">
-  </head>
-  ```
+        outputs:
+
+        <head>
+            <title>Nested Title | MyAwesomeWebsite.com</title>
+        </head>
+    */}
+    titleTemplate="MySite.com - %s"
+
+    {/*
+        (optional) used as a fallback when a template exists but a title is not defined
+
+        <Helmet
+            defaultTitle="My Site"
+            titleTemplate="My Site - %s"
+        />
+
+        outputs:
+
+        <head>
+            <title>My Site</title>
+        </head>
+    */}
+    defaultTitle="My Default Title"
+
+    {/* (optional) callback that tracks DOM changes */}
+    onChangeClientState={(newState) => console.log(newState)}
+>
+    {/* html attributes */}
+    <html lang="en" amp />
+
+    {/* body attributes */}
+    <body className="root" />
+
+    {/* title attributes and value */}
+    <title itemProp="name" lang="en">My Plain Title or {`dynamic`} title</title>
+
+    {/* base element */}
+    <base target="_blank" href="http://mysite.com/" />
+
+    {/* multiple meta elements */}
+    <meta name="description" content="Helmet application" />
+    <meta property="og:type" content="article" />
+
+    {/* multiple link elements */}
+    <link rel="canonical" href="http://mysite.com/example" />
+    <link rel="apple-touch-icon" href="http://mysite.com/img/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon" sizes-"72x72" href="http://mysite.com/img/apple-touch-icon-72x72.png" />
+
+    {/* multiple script elements */}
+    <script src="http://include.com/pathtojs.js" type="text/javascript" />
+
+    {/* inline script elements */}
+    <script type="application/ld+json">{`
+        {
+            "@context": "http://schema.org"
+        }
+    `}</script>
+
+    {/* noscript elements */}
+    <noscript>{`
+        <link rel="stylesheet" type="text/css" href="foo.css" />
+    `}</noscript>
+
+    {/* inline style elements */}
+    <style type="text/css">{`
+        body {
+            background-color: blue;
+        }
+
+        p {
+            font-size: 12px;
+        }
+    `}</style>
+</Helmet>
+```
 
 ## Contributing to this project
 Please take a moment to review the [guidelines for contributing](CONTRIBUTING.md).
@@ -300,8 +253,12 @@ Please take a moment to review the [guidelines for contributing](CONTRIBUTING.md
 
 MIT
 
+<<<<<<< HEAD
 ## More Examples
 [react-helmet-example](https://github.com/mattdennewitz/react-helmet-example)
 
 
 
+=======
+<img align="left" height="200" src="http://static.nfl.com/static/content/public/static/img/logos/nfl-engineering-light.svg" />
+>>>>>>> head/master
